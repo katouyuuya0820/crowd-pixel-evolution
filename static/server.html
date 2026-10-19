@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理画面</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #fff; color: #000; font-family: "Meiryo", "メイリオ", sans-serif; font-size: 15px; }
+  a { color: #000; }
+  button, input, select {
+    font: inherit; color: #000; background: #fff; border: 1px solid #000; padding: 4px 10px;
+  }
+  button { cursor: pointer; }
+  button:hover { background: #000; color: #fff; }
+  .top { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #000; }
+  .top .right { display: flex; gap: 1.5em; align-items: center; }
+  .top b { font-variant-numeric: tabular-nums; }
+  .wrap { display: grid; grid-template-columns: 280px 1fr 220px; gap: 24px; padding: 16px; }
+  @media (max-width: 1000px) { .wrap { grid-template-columns: 1fr; } }
+  h2 { font-size: 1rem; margin: 0 0 8px; }
+  section + section { margin-top: 24px; }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+  .row input[type=text], #topicIn { flex: 1; min-width: 0; }
+  .stat { display: flex; justify-content: space-between; padding: 3px 0; }
+  .stat b { font-variant-numeric: tabular-nums; }
+  .progress { height: 8px; border: 1px solid #000; margin: 6px 0; }
+  .progress > div { height: 100%; width: 0; background: #000; }
+  .small { font-size: .85rem; }
+  canvas.art { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; border: 1px solid #000; }
+  .bestbox { display: flex; gap: 16px; align-items: flex-start; }
+  .bestbox canvas { width: min(320px, 40vw); flex: none; }
+  .topic { font-size: 1.6rem; font-weight: bold; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .cell .meta { display: flex; justify-content: space-between; font-size: .8rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .cell.rank1 canvas { border-width: 3px; }
+  .qr img { display: block; width: 100%; }
+  .url { word-break: break-all; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="top">
+  <b>管理画面</b>
+  <div class="right">
+    <a href="/result" target="_blank">リザルト画面</a>
+    <span id="badge">選択数 <b id="total">0</b></span>
+    <span id="gen">第0世代</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div>
+    <section>
+      <h2>お題</h2>
+      <div class="row"><input id="topicIn" placeholder="例：夕焼けの海" maxlength="100"><button id="topicBtn">反映</button></div>
+    </section>
+    <section>
+      <h2>世代</h2>
+      <div class="stat"><span>世代</span><b id="sGen">0</b></div>
+      <div class="stat"><span>この世代の選択</span><b><span id="sGenVotes">0</span> / <span id="sThr">0</span></b></div>
+      <div class="progress"><div id="bar"></div></div>
+      <div class="stat"><span>参加中（直近60秒）</span><b id="sPart">0</b></div>
+      <div class="stat"><span>集団</span><b id="sSize">0</b></div>
+      <div class="row"><span>次の世代までの選択数</span><input id="thrIn" type="number" min="1" style="width:70px"><button id="thrBtn">変更</button></div>
+      <div class="row"><button id="advBtn">今すぐ次の世代へ</button></div>
+    </section>
+    <section>
+      <h2>リセット</h2>
+      <div class="row"><span>集団</span><input id="sizeIn" type="number" min="4" max="40" value="18" style="width:60px">
+        <span>並べる枚数</span><select id="kIn"><option>4</option><option>6</option><option selected>9</option></select></div>
+      <div class="row">
+        <span>選択数</span><input id="rthrIn" type="number" min="1" placeholder="自動" style="width:70px"></div>
+      <div class="row"><span>色</span><select id="palIn"><option value="color8">カラー8色</option><option value="gray4">グレー4階調（2ビット）</option><option value="mono2">白黒（1ビット）</option></select></div>
+      <div class="row"><span>解像度</span><select id="resIn"><option>8</option><option>12</option><option selected>16</option><option>24</option><option>32</option></select></div>
+      <div class="row"><button id="resetBtn">砂嵐からやり直す</button></div>
+      <div class="small" style="margin-top:4px">これまでの記録は data/ に残ります</div>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>現在のベスト</h2>
+      <div class="bestbox">
+        <canvas class="art" id="best"></canvas>
+        <div>
+          <div class="topic" id="topicShow">—</div>
+          <div class="stat"><span>勝ち / 比較</span><b id="bestWC">0 / 0</b></div>
+          <div class="stat"><span>評価</span><b id="bestFit">—</b></div>
+          <div class="small">評価 = (勝ち+1) / (比較+2)。並んだ中から選ばれると、並んでいた残り全部に勝ったと数える</div>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h2>みんなの好み</h2>
+      <div class="bestbox">
+        <canvas class="art" id="model" style="width:min(200px,30vw)"></canvas>
+        <div class="small">各ピクセルで、これまでに一番選ばれやすかった色（選択 <b id="modelEvents">0</b> 回分の集計）。
+          子を作るとき、変える色はこの確率で選ばれる。集計は周りのピクセルにも少し配り（ぼかし）、どの色でも選ばれ方が変わらないピクセルは白に少し寄せる。
+          <div style="margin-top:8px">色ごとの選ばれやすさ（全体、1 = 偶然と同じ。低い色はだんだん出にくくなる）</div>
+          <div id="colors" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div></div>
+      </div>
+    </section>
+    <section>
+      <h2>現在の集団（評価の高い順）</h2>
+      <div class="grid" id="grid"></div>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>参加はこちら</h2>
+      <div class="qr"><img id="qr" alt="参加用QRコード"></div>
+      <div class="url" id="url">—</div>
+      <div class="small" id="urlOthers"></div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/pixel.js"></script>
+<script src="/static/server.js"></script>
+</body>
+</html>

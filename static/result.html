@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HIEC リザルト</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="title">リザルト<small id="gen">—</small></div>
+  <div class="votes-badge" id="badge"><span class="num" id="total">0</span><span>票</span></div>
+</header>
+
+<div class="result">
+  <div class="topic"><span class="label">お題</span><span id="topic">—</span></div>
+
+  <div class="panel" style="margin:16px 0">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0;font-size:1rem;color:var(--muted)">ベストの移り変わり</h2>
+      <div class="row">
+        <span class="muted">表示する間隔</span>
+        <select id="kSel">
+          <option value="1">毎世代</option><option value="2">2世代ごと</option><option value="5">5世代ごと</option>
+          <option value="10">10世代ごと</option><option value="auto" selected>自動（約12枚）</option>
+        </select>
+        <button id="reload">更新</button>
+      </div>
+    </div>
+    <div class="strip" id="strip" style="margin-top:12px"></div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin:0 0 6px;font-size:1rem;color:var(--muted)">世代ごとの上位</h2>
+    <div id="rows"></div>
+    <p class="muted" id="empty" style="display:none">まだ終わった世代がありません。</p>
+  </div>
+</div>
+
+<script src="/static/pixel.js"></script>
+<script src="/static/result.js"></script>
+</body>
+</html>

@@ -102,6 +102,11 @@ async def page_result() -> FileResponse:
     return FileResponse(STATIC / "result.html")
 
 
+@app.get("/best")
+async def page_best() -> FileResponse:
+    return FileResponse(STATIC / "best.html")
+
+
 # ---------- 学生用 API ----------
 class VoteIn(BaseModel):
     client_id: str = Field(min_length=1, max_length=64)
@@ -126,6 +131,13 @@ async def api_vote(v: VoteIn) -> dict:
 @app.get("/api/summary")
 async def api_summary() -> dict:
     return game.summary()
+
+
+@app.get("/api/best")
+async def api_best() -> dict:
+    """いまの集団で評価が一番高い個体の遺伝子だけ（お題は返さない）"""
+    best = game.pop.ranked()
+    return {"gen": game.pop.gen, "genome": best[0]["genome"] if best else None}
 
 
 @app.get("/api/history")
